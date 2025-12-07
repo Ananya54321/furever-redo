@@ -4,10 +4,11 @@ import Seller from "../db/schema/seller.schema";
 import { connectToDatabase } from "../db/dbConfig";
 import { cookies } from "next/headers";
 
-connectToDatabase();
+
 import jwt from "jsonwebtoken";
 
 export async function getUserByToken(token, userType) {
+  await connectToDatabase();
   const Member = userType === "seller" ? Seller : User;
   const JWT_SECRET =
     userType === "seller"

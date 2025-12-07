@@ -4,6 +4,12 @@ import axios from "axios";
 import { getToken } from "@/../actions/userActions";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/ImageUploader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar as CalendarIcon, MapPin, Clock } from "lucide-react";
 
 const EventForm = () => {
   const [eventData, setEventData] = useState({
@@ -14,7 +20,6 @@ const EventForm = () => {
     eventTime: "",
     location: "",
   });
-  const [imageUploaded, setImageUploaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [token, setToken] = useState(null);
@@ -24,16 +29,13 @@ const EventForm = () => {
   useEffect(() => {
     const fetchToken = async () => {
       const userToken = await getToken("userToken");
-      console.log("User token from cookies:", userToken);
       if (userToken) {
         setToken(userToken);
         setIsLoggedIn(true);
       } else {
-        console.error("No token found");
         setMessage("Please log in to create an event.");
       }
     };
-
     fetchToken();
   }, []);
 
@@ -45,14 +47,13 @@ const EventForm = () => {
     }));
   };
 
-  const handleOnUpload = (result) => {
-    console.log("Upload successful:", result);
-    const imageUrl = result.info.secure_url;
+  const handleOnUpload = (url) => {
+    // The ImageUploader now passes the URL string directly
+    console.log("Upload successful:", url);
     setEventData((prev) => ({
       ...prev,
-      image: imageUrl,
+      image: url,
     }));
-    setImageUploaded(true);
     setMessage("Image uploaded successfully!");
   };
 
@@ -79,15 +80,12 @@ const EventForm = () => {
         eventDate: new Date(eventData.eventDate).toISOString(),
       };
 
-      console.log("Submitting event data:", formattedData);
-
       const response = await axios.post("/api/event", {
         eventData: formattedData,
         token,
       });
 
       if (response.data.success) {
-        setMessage("Event created successfully!");
         router.push("/events");
       }
     } catch (error) {
@@ -99,102 +97,129 @@ const EventForm = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Add New Event</h1>
+    <div className="container mx-auto py-10 px-4 max-w-2xl">
+      <Card className="shadow-lg">
+        <CardHeader className="bg-primary/5 border-b mb-6">
+          <CardTitle className="text-2xl font-bold flex items-center gap-2">
+            <CalendarIcon className="w-6 h-6 text-primary" />
+            Create New Event
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {message && (
+            <div
+              className={`p-3 mb-6 rounded-md text-sm font-medium ${
+                message.includes("Error")
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              {message}
+            </div>
+          )}
 
-      {message && (
-        <div
-          className={`p-2 mb-4 ${
-            message.includes("Error") || message.includes("error")
-              ? "bg-red-100 text-red-700"
-              : "bg-green-100 text-green-700"
-          } rounded`}>
-          {message}
-        </div>
-      )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="title">Event Title</Label>
+              <Input
+                id="title"
+                name="title"
+                value={eventData.title}
+                onChange={handleInputChange}
+                required
+                placeholder="e.g., Sunday Dog Park Meetup"
+                className="focus-visible:ring-accent"
+              />
+            </div>
 
-      {!isLoggedIn ? (
-        <div className="p-4 bg-yellow-100 text-yellow-800 rounded">
-          You need to be logged in to create an event.
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1 font-medium">Event Title</label>
-            <input
-              type="text"
-              name="title"
-              value={eventData.title}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="eventDate">Date</Label>
+                <div className="relative">
+                  <Input
+                    type="date"
+                    id="eventDate"
+                    name="eventDate"
+                    value={eventData.eventDate}
+                    onChange={handleInputChange}
+                    required
+                    className="focus-visible:ring-accent"
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Description</label>
-            <textarea
-              name="description"
-              value={eventData.description}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-              rows="3"></textarea>
-          </div>
-          <label className="block mb-1 font-medium">Event Image</label>
+              <div className="space-y-2">
+                <Label htmlFor="eventTime">Time</Label>
+                <div className="relative">
+                  <Input
+                    type="time"
+                    id="eventTime"
+                    name="eventTime"
+                    value={eventData.eventTime}
+                    onChange={handleInputChange}
+                    required
+                    className="focus-visible:ring-accent"
+                  />
+                  <Clock className="w-4 h-4 text-gray-500 absolute right-3 top-3 pointer-events-none opacity-50" />
+                </div>
+              </div>
+            </div>
 
-          <ImageUploader
-            image={eventData.image}
-            onUploadSuccess={handleOnUpload}
-            onUploadError={handleUploadError}
-          />
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <div className="relative">
+                <Input
+                  id="location"
+                  name="location"
+                  value={eventData.location}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="e.g., Central Park, Hyd"
+                  className="pl-10 focus-visible:ring-accent"
+                />
+                <MapPin className="w-4 h-4 text-gray-500 absolute left-3 top-3 pointer-events-none" />
+              </div>
+            </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Event Date</label>
-            <input
-              type="date"
-              name="eventDate"
-              value={eventData.eventDate}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={eventData.description}
+                onChange={handleInputChange}
+                required
+                placeholder="Tell people what your event is about..."
+                className="min-h-[120px] focus-visible:ring-accent"
+              />
+            </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Event Time</label>
-            <input
-              type="time"
-              name="eventTime"
-              value={eventData.eventTime}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label>Event Image</Label>
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <ImageUploader
+                  media={eventData.image ? [eventData.image] : []}
+                  onUploadSuccess={handleOnUpload}
+                  onUploadError={handleUploadError}
+                />
+                {!eventData.image && (
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Upload a banner image/poster for your event
+                  </p>
+                )}
+              </div>
+            </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Location</label>
-            <input
-              type="text"
-              name="location"
-              value={eventData.location}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
-
-          <div className="pt-2">
-            <button
+            <Button
               type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading || !eventData.image}>
-              {loading ? "Creating Event..." : "Create Event"}
-            </button>
-          </div>
-        </form>
-      )}
+              className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-6 text-lg mt-4"
+              disabled={loading || !eventData.image}
+            >
+              {loading ? "Creating..." : "Publish Event"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

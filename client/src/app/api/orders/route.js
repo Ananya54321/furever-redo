@@ -1,46 +1,156 @@
-// /api / orders / route.js
-
 import { NextResponse } from "next/server";
-import { db } from "../../../../db/actions";
+import Stripe from "stripe";
+import { connectToDatabase } from "../../../../db/dbConfig";
+import Order from "../../../../db/schema/order.schema";
+import User from "../../../../db/schema/user.schema";
+import Product from "../../../../db/schema/product.schema";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
-export async function GET(request) {
+connectToDatabase();
+
+async function getUser(request) {
+  const cookieStore = await cookies();
+  const userToken = cookieStore.get("userToken")?.value;
+
+  if (!userToken) return null;
+
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
-    // console.log("userId", userId);
-    const result = await db.getOrders(userId);
-    // console.log("result", result);
-    return NextResponse.json({ status: 200, message: "success", data: result });
+    const decoded = jwt.verify(userToken, process.env.JWT_USER_SECRET);
+    return decoded.id;
   } catch (error) {
+    return null;
+  }
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export async function POST(request) {
+  const userId = await getUser(request);
+  if (!userId) {
     return NextResponse.json(
-      {
-        status: 500,
-        statusText: "Internal Server Error",
-        message: error.message,
-      },
-      {
-        status: 500,
-      }
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const body = await request.json();
+    const { shippingAddress, paymentSessionId } = body;
+    
+    // If verify with Stripe
+    if (paymentSessionId) {
+        const checkoutSession = await stripe.checkout.sessions.retrieve(paymentSessionId);
+        if (checkoutSession.payment_status !== 'paid') {
+             throw new Error("Payment not completed");
+        }
+        // Could verify metadata.userId matches userId here
+    }
+
+    const user = await User.findById(userId).populate("cart.product").session(session);
+
+    if (!user || user.cart.length === 0) {
+        await session.abortTransaction();
+        session.endSession();
+        return NextResponse.json(
+            { success: false, error: "Cart is empty" },
+            { status: 400 }
+        );
+    }
+
+    let totalAmount = 0;
+    const orderItems = [];
+
+    // Verify stock and calculate total
+    for (const item of user.cart) {
+        if (!item.product) continue; // Skip deleted products
+        
+        const product = await Product.findById(item.product._id).session(session);
+        
+        if (!product) {
+            throw new Error(`Product ${item.product.name} not found`);
+        }
+
+        // Check stock only if we haven't already reserved it (Stripe flows usually involve reserving or optimistic check)
+        // For now, we check at checkout time.
+        if (product.quantity < item.quantity) {
+            throw new Error(`Insufficient stock for ${product.name}`);
+        }
+
+        orderItems.push({
+            productId: product._id,
+            quantity: item.quantity,
+            priceAtPurchase: product.price,
+        });
+
+        totalAmount += product.price * item.quantity;
+        
+        // Update product stock
+        product.quantity -= item.quantity;
+        await product.save({ session });
+    }
+
+    // Create Order
+    const order = await Order.create([{
+        userId,
+        items: orderItems,
+        totalAmount,
+        shippingAddress: shippingAddress || { fullName: user.name, email: user.email }, // Use provided or fallback
+        paymentStatus: paymentSessionId ? "completed" : "pending", // Mark completed if verified
+        paymentSessionId: paymentSessionId || undefined, // Store session ID for tracking
+    }], { session });
+
+    // Clear user cart and add to productsBought
+    user.cart = [];
+    user.productsBought.push(order[0]._id);
+    await user.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return NextResponse.json({
+      success: true,
+      order: order[0],
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Create order error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Internal server error" },
+      { status: 500 }
     );
   }
 }
 
-export async function POST(request) {
-  try {
-    const data = await request.json();
-    console.log("data received!", data);
-    const result = await db.addOrder(data);
-    return NextResponse.json({ status: 200, message: "success", result });
-  } catch (error) {
+export async function GET(request) {
+  const userId = await getUser(request);
+  if (!userId) {
     return NextResponse.json(
-      {
-        status: 500,
-        statusText: "Internal Server Error",
-        message: error.message,
-      },
-      {
-        status: 500,
-      }
+      { success: false, error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const orders = await Order.find({ userId })
+        .populate("items.productId")
+        .sort({ createdAt: -1 });
+
+    return NextResponse.json({
+      success: true,
+      orders,
+    });
+  } catch (error) {
+    console.error("Fetch orders error:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
     );
   }
 }

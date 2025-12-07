@@ -6,12 +6,12 @@ const ImageUploader = ({ media, onUploadSuccess, onUploadError }) => {
   const [previewUrls, setPreviewUrls] = useState(media || []);
 
   const handleUploadSuccess = (result) => {
-    // const uploadedMediaUrl = result.info.secure_url;
+    const uploadedMediaUrl = result.info.secure_url;
     // Add the new media URL to the preview list
-    // setPreviewUrls((prev) => [...prev, uploadedMediaUrl]);
-    // if (onUploadSuccess) {
-    //   onUploadSuccess(uploadedMediaUrl);
-    // }
+    setPreviewUrls((prev) => [...prev, uploadedMediaUrl]);
+    if (onUploadSuccess) {
+      onUploadSuccess(uploadedMediaUrl);
+    }
   };
 
   const handleUploadError = (error) => {

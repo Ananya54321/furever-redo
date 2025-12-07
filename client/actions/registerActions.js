@@ -64,6 +64,15 @@ export async function registerAction(formData) {
     });
     await setCookie(token, userType);
 
+    // Create user in CometChat
+    try {
+        const { createCometChatUser } = await import("@/lib/cometChatApi");
+        await createCometChatUser(user._id.toString(), user.name);
+    } catch (chatError) {
+        console.error("Failed to sync user with CometChat:", chatError);
+        // Continue execution, do not fail registration
+    }
+
     return {
       success: true,
       user: {

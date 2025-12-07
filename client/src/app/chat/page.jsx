@@ -17,9 +17,57 @@ const Page = () => {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
-  let isMounted = true; // Flag to prevent state updates on unmounted component
-
   useEffect(() => {
+    let isMounted = true; 
+
+    const authenticateUser = async () => {
+      if (typeof window === "undefined") return;
+
+      try {
+        // Get user token from cookies
+        let userToken = await getToken("userToken");
+        let userType = "user";
+
+        // If no user token, check for seller token
+        if (!userToken) {
+          userToken = await getToken("sellerToken");
+          userType = "seller";
+        }
+
+        console.log(`Token found (${userType}):`, userToken);
+
+        if (!userToken) {
+          console.log("No authentication token found");
+          if (isMounted) {
+            setError("Please log in to access chat");
+            setLoading(false);
+          }
+          return;
+        }
+
+        // Get user data using token
+        const res = await getUserByToken(userToken, userType);
+        console.log("User data:", res.user);
+
+        if (!res.success) {
+           // If request returned success: false, it's a genuine error.
+           // We can throw here to be caught below, or handle directly.
+           throw new Error(res.message || "Failed to authenticate user");
+        }
+
+        if (isMounted) {
+          setUser(res.user);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Authentication error:", error);
+        if (isMounted) {
+          setError("Authentication failed: " + error.message);
+          setLoading(false);
+        }
+      }
+    };
+
     // Check authentication on component mount
     authenticateUser();
 
@@ -28,42 +76,6 @@ const Page = () => {
       isMounted = false;
     };
   }, []); // Empty dependency array ensures this runs only once on mount
-
-  const authenticateUser = async () => {
-    if (typeof window === "undefined") return;
-
-    try {
-      // Get user token from cookies
-      const userToken = await getToken("userToken");
-      console.log("User token from cookies:", userToken);
-
-      if (!userToken) {
-        console.log("No authentication token found");
-        if (isMounted) {
-          setError("Please log in to access chat");
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Get user data using token
-      const res = await getUserByToken(userToken, "user");
-      console.log("User data:", res.user);
-
-      if (res.success && isMounted) {
-        setUser(res.user);
-        setLoading(false);
-      } else {
-        throw new Error(res.message || "Failed to authenticate user");
-      }
-    } catch (error) {
-      console.error("Authentication error:", error);
-      if (isMounted) {
-        setError("Authentication failed: " + error.message);
-        setLoading(false);
-      }
-    }
-  };
 
   // Render loading state
   if (loading) {
@@ -77,11 +89,11 @@ const Page = () => {
 
   // Render chat component when user is authenticated
   return (
-    <div className="chat-container">
+    <div style={{ height: "calc(100vh - 80px)", width: "100%" }} className="flex flex-col">
       {user ? (
         <CometChatNoSSR currentUser={user} />
       ) : (
-        <div className="chat-unauthorized">
+        <div className="flex items-center justify-center h-full text-gray-500">
           Please log in to access the chat feature
         </div>
       )}

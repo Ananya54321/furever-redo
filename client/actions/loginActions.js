@@ -122,25 +122,14 @@ export async function loginAction(formData) {
   }
 }
 
-let authenticateUser = null;
-
 export async function getAuthenticatedUser() {
   try {
-    console.log("Fetching authenticated user from cache");
-    if (authenticateUser) {
-      console.log("Returning authenticated user from cache");
-      return authenticateUser;
-    }
     const cookieStore = await cookies();
     const userToken = cookieStore.get("userToken")?.value;
     const sellerToken = cookieStore.get("sellerToken")?.value;
 
-    // console.log("User token from cookies:", userToken);
-
     if (!userToken && !sellerToken) {
-      console.log("No authentication token found");
       return null;
-      
     }
 
     if (userToken) {
@@ -148,18 +137,14 @@ export async function getAuthenticatedUser() {
         const decoded = jwt.verify(userToken, process.env.JWT_USER_SECRET);
         const user = await User.findById(decoded.id).select("-password -__v").lean();
 
-        console.log("User from database:", user);
-
         if (user) {
-          authenticateUser = {
-            // ...user.toObject(),
-            _id: user._id.toString(),
-            userType: "user",
-            token: userToken,
-          };
           return {
-            // ...user.toObject(),
             _id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            profilePicture: user.profilePicture, // Ensure this is returned if needed
+            bio: user.bio, // Ensure bio is returned
+            createdAt: user.createdAt,
             userType: "user",
             token: userToken,
           };
@@ -172,28 +157,21 @@ export async function getAuthenticatedUser() {
     if (sellerToken) {
       try {
         const decoded = jwt.verify(sellerToken, process.env.JWT_SELLER_SECRET);
-        console.log("Seller from database:", decoded);
         const seller = await Seller.findById(decoded.id).select(
           "-password -__v"
         ).lean();
 
         if (seller) {
-          authenticateUser = {
-            // ...seller.toObject(),
-            _id: seller._id.toString(),
-            userType: "seller",
-            token: sellerToken,
-          };
           return {
-            // ...seller.toObject(),
             _id: seller._id.toString(),
+            name: seller.name,
+            email: seller.email,
             userType: "seller",
             token: sellerToken,
           };
         }
       } catch (error) {
         console.error("Seller token verification failed:", error);
-        redirect("/login");
       }
     }
 

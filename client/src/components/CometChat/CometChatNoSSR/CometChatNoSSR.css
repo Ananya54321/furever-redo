@@ -1,86 +1,53 @@
-/* Layout for the main container that holds conversations and messages */
 .conversations-with-messages {
   display: flex;
-  height: 95vh; /* Make container full height */
-  width: 100vw; /* Make container full width */
-  overflow: hidden; /* Prevent scrolling on the main container */
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #fff;
 }
 
-/* Sidebar wrapper for conversation list */
 .conversations-wrapper {
-  width: 300px; /* Or desired width for the sidebar */
+  width: 320px;
   height: 100%;
-  border-right: 1px solid #ccc;
+  border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Allow scrolling if content overflows */
 }
 
-/* Hide overflow content inside the conversation component */
-.conversations-wrapper > .cometchat {
+.cometchat-conversations-title {
+    font-size: 20px;
+    font-weight: 600;
+    padding: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.messages-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #fff;
   overflow: hidden;
 }
 
-/* Message section layout */
-.messages-wrapper {
-  flex-grow: 1; /* Take remaining width */
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* Prevent unexpected overflow */
-}
-
-/* Style the CometChat Header directly */
-.messages-wrapper > .cometchat-chat-header {
-  flex: 0 0 auto; /* Don't grow, don't shrink, basis is auto */
-  min-height: 60px; /* Ensure minimum height */
-  height: 60px; /* Set explicit height */
-  padding: 0 15px; /* Horizontal padding */
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid #ccc;
-  box-sizing: border-box; /* Include padding/border in height */
-  background-color: #fff; /* Optional: background */
-  width: 100%; /* Ensure full width */
-}
-
-/* Style the CometChat Message List directly */
-.messages-wrapper > .cometchat-message-list-wrapper {
-  flex: 1 1 auto; /* Grow and shrink to fill space, basis is auto */
-  overflow-y: auto; /* Enable scrolling for messages */
-  height: 0; /* Necessary for flex-grow in some scenarios */
-}
-
-/* Style the CometChat Message Composer directly */
-.messages-wrapper > .cometchat-message-composer {
-  flex: 0 0 auto; /* Don't grow, don't shrink, basis is auto */
-  border-top: 1px solid #ccc; /* Optional: separator */
-  box-sizing: border-box;
-}
-
-/* Styling for when no conversation is selected */
 .empty-conversation {
-  flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
-  font-size: 1.2em;
-  color: #888;
+  font-size: 16px;
+  color: #64748b;
+  background-color: #f8fafc;
 }
 
-/* Ensure message composer does not have rounded corners */
-.cometchat .cometchat-message-composer {
-  border-radius: 0px;
+/* Ensure sub-components fill available space */
+.cometchat-conversations {
+    height: 100% !important;
 }
 
-.chat-loading,
-.chat-error {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
-  font-size: 1.5em;
-  color: #555;
+.cometchat-message-list {
+    flex: 1;
+    overflow-y: auto;
 }

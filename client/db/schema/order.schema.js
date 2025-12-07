@@ -46,6 +46,11 @@ const OrderSchema = new Schema(
       enum: ["pending", "completed", "failed"],
       default: "completed",
     },
+    paymentSessionId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null values but enforces uniqueness when present
+    },
   },
   { timestamps: true }
 );

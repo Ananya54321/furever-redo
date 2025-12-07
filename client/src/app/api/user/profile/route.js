@@ -10,7 +10,7 @@ connectToDatabase();
 
 export async function PUT(request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const userToken = cookieStore.get("userToken")?.value;
     const sellerToken = cookieStore.get("sellerToken")?.value;
 
@@ -98,7 +98,7 @@ export async function PUT(request) {
 
 export async function GET(request) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const userToken = cookieStore.get("userToken")?.value;
     const sellerToken = cookieStore.get("sellerToken")?.value;
 

@@ -62,3 +62,62 @@ export async function POST(request) {
     );
   }
 }
+
+
+export async function PUT(request) {
+  try {
+    // Get user from cookie instead of body token
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const userToken = cookieStore.get("userToken")?.value;
+    
+    if (!userToken) {
+      return NextResponse.json({ success: false, error: "Unauthorized. Please login." }, { status: 401 });
+    }
+
+    let userId;
+    try {
+      const jwt = await import("jsonwebtoken");
+      const decoded = jwt.default.verify(userToken, process.env.JWT_USER_SECRET);
+      userId = decoded.id;
+    } catch (jwtError) {
+      console.error("JWT verification error:", jwtError);
+      return NextResponse.json({ success: false, error: "Invalid token. Please login again." }, { status: 401 });
+    }
+
+    const { eventId } = await request.json();
+
+    if (!eventId) {
+      return NextResponse.json({ success: false, error: "Event ID is required" }, { status: 400 });
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return NextResponse.json({ success: false, error: "Event not found" }, { status: 404 });
+    }
+
+    const isInterested = event.interested.includes(userId);
+
+    if (isInterested) {
+      event.interested.pull(userId);
+    } else {
+      event.interested.push(userId);
+    }
+
+    await event.save();
+
+    return NextResponse.json({
+      success: true,
+      message: isInterested ? "Removed from interested" : "Added to interested",
+      interested: event.interested,
+      isInterested: !isInterested
+    });
+  } catch (err) {
+    console.error("Error toggling interest:", err);
+    console.error("Error stack:", err.stack);
+    return NextResponse.json({ 
+      success: false, 
+      error: err.message || "Failed to update interest. Please try again." 
+    }, { status: 500 });
+  }
+}

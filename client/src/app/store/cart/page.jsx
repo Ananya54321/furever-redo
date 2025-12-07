@@ -1,173 +1,207 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import axios from "axios";
-import { getAuthenticatedUser } from "../../../../actions/loginActions";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Trash2, Minus, Plus, ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function CartPage() {
-  const [cart, setCart] = useState([]);
-  const [user, setUser] = useState(null);
-  const [expectedDate, setExpectedDate] = useState("");
   const router = useRouter();
+  const [cart, setCart] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  const fetchCart = async () => {
+    try {
+      const { data } = await axios.get("/api/cart");
+      if (data.success) {
+        setCart(data.cart);
+      }
+    } catch (error) {
+        console.error("Cart fetch error:", error);
+        // If 401, maybe redirect or show empty
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Calculate delivery date ONCE
-    const randomDays = Math.floor(Math.random() * 6) + 3; // 3 to 8 days
-    const deliveryDate = new Date();
-    deliveryDate.setDate(deliveryDate.getDate() + randomDays);
-    setExpectedDate(deliveryDate.toDateString());
+    fetchCart();
   }, []);
 
-  useEffect(() => {
-    getAuthenticatedUser().then((user) => {
-      setUser(user);
-      axios
-        .get("/api/cart", {
-          params: { userId: user._id },
-        })
-        .then((response) => {
-          setCart([]);
-          setCart(response.data.data);
-          console.log("Fetched cart:", response.data.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching cart:", error);
-        });
-    });
-  }, []);
-
-  const updateQuantity = (id, qty) => {
-    const updated = cart.map((item) =>
-      item._id === id ? { ...item, quantity: qty } : item
-    );
-    setCart(updated);
+  const updateQuantity = async (productId, newQuantity) => {
+      try {
+          const { data } = await axios.put("/api/cart", {
+              productId,
+              quantity: newQuantity
+          });
+          if (data.success) setCart(data.cart);
+      } catch (error) {
+          toast.error("Failed to update quantity");
+      }
   };
 
-  const handleProductClick = (product) => {
-    console.log("Product clicked:", product);
-    // Optional: router.push(`/store/product?productId=${product._id}`);
+  const removeItem = async (productId) => {
+      try {
+          const { data } = await axios.delete(`/api/cart?productId=${productId}`);
+          if (data.success) setCart(data.cart);
+      } catch (error) {
+          toast.error("Failed to remove item");
+      }
   };
 
-  const handleBuyNow = (product) => {
-    const checkoutData = {
-      ...product,
-      price: product.price * product.quantity,
-    };
-    localStorage.setItem("checkoutItem", JSON.stringify(checkoutData));
-    router.push("/store/checkout");
+  const handleCheckout = async () => {
+      setCheckingOut(true);
+      try {
+          // Mock shipping address for now - in real app would get from form
+          const shippingAddress = {
+              fullName: "Test User",
+              mobile: "1234567890",
+              addressLines: ["123 Street", "City"],
+              email: "test@example.com"
+          };
+
+          const { data } = await axios.post("/api/create-checkout-session", { 
+              items: cart,
+              shippingAddress 
+          });
+          
+          if (data.success && data.url) {
+              window.location.href = data.url;
+          } else {
+              toast.error("Failed to start payment");
+          }
+      } catch (error) {
+          console.error(error);
+          toast.error(error.response?.data?.error || "Checkout failed");
+      } finally {
+          setCheckingOut(false);
+      }
   };
 
-  const handleCheckoutCart = () => {
-    const total = cart.reduce(
-      (acc, item) => acc + item.price * item.quantity,
-      0
-    );
-    const cartData = {
-      items: cart,
-      total,
-    };
-    localStorage.setItem("cartCheckout", JSON.stringify({
-      ...cartData,
-      userId: user._id
-    }));
-    router.push("/store/cart/checkout");
-  };
+  const calculateTotal = () => {
+      return cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  }
 
-  const totalPrice = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  if (loading) return <div className="py-20 text-center">Loading cart...</div>;
 
   return (
-    <div className="min-h-screen bg-[#F5F5DC] p-8">
-      <h1 className="text-3xl font-bold mb-6 text-[#355E3B]">🛒 Your Cart</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* All Cart Items */}
-        <div className="flex-1 grid gap-6">
-          {cart.map((product) => (
-            <Card
-              key={product._id}
-              className="bg-white rounded-xl shadow-md hover:shadow-lg transition"
-              onClick={() => handleProductClick(product)}
-            >
-              <div className="flex gap-4 p-4">
-                <img
-                  src={product.images[0]}
-                  alt={product.name}
-                  className="w-32 h-32 object-cover rounded"
-                />
-                <div className="flex-1">
-                  <CardTitle className="text-xl font-semibold text-[#355E3B]">
-                    {product.name}
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {product.description}
-                  </p>
-
-                  <div className="flex items-center gap-4">
-                    <label htmlFor={`qty-${product._id}`} className="text-sm">
-                      Quantity:
-                    </label>
-                    <input
-                      id={`qty-${product._id}`}
-                      type="number"
-                      min={1}
-                      value={product.quantity}
-                      onChange={(e) =>
-                        updateQuantity(product._id, parseInt(e.target.value))
-                      }
-                      className="border px-2 py-1 rounded w-16"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <span className="ml-auto text-[#00693E] font-bold">
-                      ₹{product.price * product.quantity}
-                    </span>
-                  </div>
-
-                  <div className="mt-4">
-                    <Button
-                      variant="default"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleBuyNow(product);
-                      }}
-                    >
-                      Buy Now
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
+      {cart.length === 0 ? (
+        <div className="text-center py-10 bg-gray-50 rounded-lg">
+          <p className="text-xl text-gray-600 mb-4">Your cart is empty</p>
+          <Link href="/store">
+            <Button>Start Shopping</Button>
+          </Link>
         </div>
-
-        {/* Checkout Cart Summary */}
-        <div className="w-full lg:w-[300px] bg-white shadow-lg p-6 rounded-xl h-fit">
-          <h2 className="text-xl font-bold text-[#355E3B] mb-2">
-            🧾 Cart Summary
-          </h2>
-          <p className="text-md text-gray-700 mb-2">
-            Total Items: <strong>{cart.length}</strong>
-          </p>
-          <p className="text-md text-gray-700 mb-2">
-            Total Price: <strong>₹{totalPrice}</strong>
-          </p>
-          <p className="text-sm text-gray-600 mb-4">
-            Expected Delivery: <strong>{expectedDate}</strong>
-          </p>
-          <Button
-            variant="default"
-            className="w-full"
-            onClick={handleCheckoutCart}
-          >
-            Checkout Cart
-          </Button>
+      ) : (
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            {cart.map((item) => (
+              <Card key={item.product._id}>
+                <CardContent className="p-4 flex gap-4">
+                  <div className="relative w-24 h-24 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
+                    {item.product.images?.[0] && (
+                        <Image
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          fill
+                          className="object-cover"
+                        />
+                    )}
+                  </div>
+                  <div className="flex-grow">
+                      <div className="flex justify-between mb-2">
+                          <Link href={`/store/${item.product._id}`} className="font-semibold hover:underline">
+                              {item.product.name}
+                          </Link>
+                          <p className="font-bold">₹{item.product.price * item.quantity}</p>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-4">{item.product.category}</p>
+                      
+                      <div className="flex justify-between items-center">
+                          <div className="flex items-center border rounded-md h-8">
+                               <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-none"
+                                onClick={() => updateQuantity(item.product._id, Math.max(1, item.quantity - 1))}
+                               >
+                                   <Minus className="h-3 w-3" />
+                               </Button>
+                               <span className="w-8 text-center text-sm">{item.quantity}</span>
+                               <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-none"
+                                onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
+                               >
+                                   <Plus className="h-3 w-3" />
+                               </Button>
+                          </div>
+                          
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => removeItem(item.product._id)}
+                          >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remove
+                          </Button>
+                      </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <div className="lg:col-span-1">
+             <Card>
+                 <CardContent className="p-6">
+                     <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+                     <div className="flex justify-between mb-2">
+                         <span>Subtotal</span>
+                         <span>₹{calculateTotal()}</span>
+                     </div>
+                     <div className="flex justify-between mb-4">
+                         <span>Shipping</span>
+                         <span>Free</span>
+                     </div>
+                     <Separator className="my-4" />
+                     <div className="flex justify-between text-lg font-bold mb-6">
+                         <span>Total</span>
+                         <span>₹{calculateTotal()}</span>
+                     </div>
+                     
+                     <Button 
+                        className="w-full bg-yellow-800 hover:bg-yellow-700 text-white" 
+                        size="lg"
+                        onClick={handleCheckout}
+                        disabled={checkingOut}
+                     >
+                         {checkingOut ? "Processing..." : "Checkout"}
+                     </Button>
+                     
+                     <div className="mt-4 text-center">
+                         <Link href="/store" className="text-sm text-gray-500 hover:underline flex items-center justify-center gap-1">
+                             <ArrowLeft className="h-3 w-3" />
+                             Continue Shopping
+                         </Link>
+                     </div>
+                 </CardContent>
+             </Card>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

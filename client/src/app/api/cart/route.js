@@ -8,7 +8,6 @@ import mongoose from "mongoose";
 
 connectToDatabase();
 
-// Helper to get authenticated user
 async function getUser(request) {
   const cookieStore = await cookies();
   const userToken = cookieStore.get("userToken")?.value;
@@ -39,7 +38,6 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    // Filter out null products (in case product was deleted)
     const validCart = user.cart.filter(item => item.product !== null);
     
     return NextResponse.json({ success: true, cart: validCart });
@@ -66,13 +64,11 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "Invalid Product ID" }, { status: 400 });
     }
 
-    // Verify product exists
     const product = await Product.findById(productId);
     if (!product) {
       return NextResponse.json({ success: false, error: "Product not found" }, { status: 404 });
     }
 
-    // Check if product is available
     if (product.quantity === 0) {
       return NextResponse.json({ success: false, error: "Product is out of stock" }, { status: 400 });
     }
@@ -82,7 +78,6 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    // Ensure cart exists
     if (!user.cart) {
       user.cart = [];
     }
@@ -99,7 +94,6 @@ export async function POST(request) {
 
     await user.save();
     
-    // Return updated cart with populated products
     const updatedUser = await User.findById(userId).populate({
         path: "cart.product",
         model: "Product",
@@ -139,7 +133,6 @@ export async function PUT(request) {
       await user.save();
     }
 
-    // Return updated cart
     const updatedUser = await User.findById(userId).populate({
         path: "cart.product",
         model: "Product",

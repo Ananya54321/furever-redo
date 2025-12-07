@@ -5,7 +5,6 @@ import Seller from "../../../../../db/schema/seller.schema";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-// Ensure database is connected
 connectToDatabase();
 
 export async function PUT(request) {
@@ -24,7 +23,6 @@ export async function PUT(request) {
     const body = await request.json();
     const { name, bio, profilePicture } = body;
     
-    // Validate input
     if (!name) {
       return NextResponse.json(
         { success: false, error: "Name is required" },
@@ -59,7 +57,6 @@ export async function PUT(request) {
       }
     }
 
-    // Update the appropriate user type
     const Model = userType === "user" ? User : Seller;
     
     const updatedUser = await Model.findByIdAndUpdate(
@@ -136,7 +133,6 @@ export async function GET(request) {
       }
     }
 
-    // Get the appropriate user type
     const Model = userType === "user" ? User : Seller;
     
     const user = await Model.findById(userId).select("-password");

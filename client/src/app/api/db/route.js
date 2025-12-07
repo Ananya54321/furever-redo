@@ -6,7 +6,6 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
-    // const result = await db.addUser(data);
     const result = await db.sendChat(data);
 
     return NextResponse.json({ status: 200, message: "success", result });

@@ -15,8 +15,6 @@ export default function EditProductPage() {
       try {
         const { data } = await axios.get(`/api/products/${id}`);
         if (data.success) {
-            // Transform tags array to string for the form if needed
-            // But ProductForm handles array, so just pass
           setProduct(data.product);
         }
       } catch (error) {

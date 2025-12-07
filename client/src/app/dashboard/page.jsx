@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingBag, LayoutDashboard, ShoppingCart, User as UserIcon } from "lucide-react";
+import { ShoppingBag, LayoutDashboard, ShoppingCart } from "lucide-react";
 import axios from "axios";
 
 export default function DashboardPage() {
@@ -64,7 +64,6 @@ export default function DashboardPage() {
             </CardContent>
         </Card>
 
-        {/* Show for everyone for now, or check user type if available in profile */}
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">

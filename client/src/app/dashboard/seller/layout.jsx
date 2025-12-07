@@ -11,7 +11,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 
 const sidebarItems = [
   {
@@ -41,7 +40,6 @@ export default function SellerDashboardLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="hidden w-64 flex-col bg-white border-r md:flex">
         <div className="p-6 border-b">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold">

@@ -5,7 +5,6 @@ import Seller from "../../../../db/schema/seller.schema";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-// Ensure database is connected
 connectToDatabase();
 
 export async function GET(request) {
@@ -19,7 +18,6 @@ export async function GET(request) {
       query.category = category;
     }
     if (search) {
-      // Use $or to search in name, description, tags, or category using regex
       query.$or = [
         { name: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
@@ -68,7 +66,6 @@ export async function POST(request) {
       );
     }
 
-    // Verify seller exists
     const seller = await Seller.findById(sellerId);
     if (!seller) {
       return NextResponse.json(
@@ -80,7 +77,6 @@ export async function POST(request) {
     const body = await request.json();
     const { name, description, price, quantity, images, category, tags, discount } = body;
 
-    // Basic validation
     if (!name || !price || !images || images.length === 0) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },

@@ -81,7 +81,8 @@ export async function PUT(request) {
       success: true,
       user: {
         ...updatedUser.toObject(),
-        _id: updatedUser._id.toString()
+        _id: updatedUser._id.toString(),
+        userType
       }
     });
   } catch (error) {
@@ -148,7 +149,8 @@ export async function GET(request) {
       success: true,
       user: {
         ...user.toObject(),
-        _id: user._id.toString()
+        _id: user._id.toString(),
+        userType
       }
     });
   } catch (error) {

@@ -17,7 +17,7 @@ Furrever is a comprehensive web application dedicated to animal welfare, adoptio
 - **Authentication**: JWT (JSON Web Tokens)
 - **Payments**: [Stripe](https://stripe.com/)
 - **Real-time**: [CometChat](https://www.cometchat.com/)
-- **Media**: Cloudinary (implied integration)
+- **Media**: Cloudinary
 
 ## Prerequisites
 

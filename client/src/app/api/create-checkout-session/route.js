@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { connectToDatabase } from "../../../../db/dbConfig";
-import User from "../../../../db/schema/user.schema";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
@@ -43,13 +42,6 @@ export async function POST(request) {
         );
     }
 
-    // Pass shipping address in metadata or rely on Stripe to collect it?
-    // User asked for "pay to seller", but simpler to keep it platform for now as agreed.
-    // We'll pass the `shippingAddress` structure to metadata so we can reconstruct order later if needed,
-    // or just rely on the cart being in the DB and user ID in metadata.
-    // Better: let Stripe handle address collection to ensure it's valid, but we already have a form?
-    // Let's use the provided address for now or duplicate it.
-    
     const lineItems = items.map((item) => ({
       price_data: {
         currency: "inr",
@@ -58,7 +50,7 @@ export async function POST(request) {
           images: item.product.images?.length > 0 ? [item.product.images[0]] : [],
           description: item.product.description ? item.product.description.substring(0, 100) : undefined,
         },
-        unit_amount: Math.round(item.product.price * 100), // Stripe expects paisa
+        unit_amount: Math.round(item.product.price * 100),
       },
       quantity: item.quantity,
     }));
@@ -71,7 +63,6 @@ export async function POST(request) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/store/cart`,
       metadata: {
         userId,
-        // userAddress: JSON.stringify(shippingAddress), // Optional: store address in metadata
         source: "furrever_store",
       },
       customer_email: shippingAddress?.email,

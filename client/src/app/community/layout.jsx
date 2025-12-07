@@ -124,7 +124,6 @@ export default function CommunityLayout({ children }) {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* Top navigation bar (mobile) */}
       <div className="md:hidden flex items-center justify-between p-4 border-b">
         <h1 className="text-xl font-bold text-primary">Communities</h1>
         <div className="flex gap-3">
@@ -142,7 +141,6 @@ export default function CommunityLayout({ children }) {
       </div>
 
       <div className="flex flex-grow">
-        {/* Left sidebar - only visible on desktop */}
         <div className="hidden md:flex flex-col w-64 border-r h-screen sticky top-0 bg-white">
           <div className="flex flex-col h-full">
             <div className="p-4">
@@ -189,7 +187,6 @@ export default function CommunityLayout({ children }) {
               </div>
             </div>
 
-            {/* Scrollable communities list */}
             <div className="overflow-y-auto flex-grow px-4 pb-20">
               {communities.length > 0 ? (
                 communities.map((community) => (
@@ -217,7 +214,6 @@ export default function CommunityLayout({ children }) {
               )}
             </div>
 
-            {/* Fixed profile section at bottom */}
             {isLoggedIn && (
               <div className="p-4 border-t fixed w-64 border border-r-1 bottom-0 left-0 right-0 bg-white">
                 <div className="flex items-center">
@@ -238,11 +234,9 @@ export default function CommunityLayout({ children }) {
           </div>
         </div>
 
-        {/* Main content */}
         <div className="flex-grow max-w-2xl mx-auto w-full">{children}</div>
       </div>
 
-      {/* Bottom navigation (mobile) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center py-3">
         <button onClick={() => router.push("/")} className="text-primary p-1">
           <Home className="w-6 h-6" />
@@ -264,7 +258,6 @@ export default function CommunityLayout({ children }) {
         </button>
       </div>
 
-      {/* Create Community Modal */}
       {isCreateModalOpen && (
         <CreateCommunityModal
           isOpen={isCreateModalOpen}

@@ -17,7 +17,7 @@ async function getUser(request) {
       const decoded = jwt.verify(userToken, process.env.JWT_USER_SECRET);
       return { id: decoded.id, type: "user" };
     } catch {
-        return null; // Invalid token
+        return null;  
     }
   }
 
@@ -45,34 +45,27 @@ export async function GET(request) {
 
     try {
         if (user.type === "user") {
-            // Fetch purchases for this user
             const orders = await Order.find({ userId: user.id })
                 .populate("items.productId")
                 .sort({ createdAt: -1 });
             
             return NextResponse.json({ success: true, transactions: orders, type: "purchase" });
         } else {
-            // Fetch sales for this seller
-            // 1. Find all products owned by this seller
             const myProducts = await Product.find({ owner: user.id }).select("_id");
             const myProductIds = myProducts.map(p => p._id);
 
-            // 2. Find orders that contain these products
             const orders = await Order.find({ "items.productId": { $in: myProductIds } })
                 .populate({
                     path: "items.productId",
-                    model: "Product" // Ensure checks against Product model
+                    model: "Product" 
                 })
-                .populate("userId", "name email") // Get buyer info
+                .populate("userId", "name email") 
                 .sort({ createdAt: -1 });
-
-            // 3. Filter/Transform to show only relevant items and calculate seller's total share
             const sales = orders.map(order => {
                 const myItems = order.items.filter(item => 
                      item.productId && myProductIds.some(id => id.toString() === item.productId._id.toString())
                 );
                 
-                // Calculate total for just my items
                 const myTotal = myItems.reduce((acc, item) => acc + (item.priceAtPurchase * item.quantity), 0);
 
                 return {

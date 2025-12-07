@@ -1,4 +1,3 @@
-import User from "@/../db/schema/user.schema";
 import Community from "@/../db/schema/community.schema";
 import CommunityPost from "@/../db/schema/communitypost.schema";
 import { connectToDatabase } from "@/../db/dbConfig";
@@ -41,7 +40,6 @@ export async function POST(request) {
     }
     const date = new Date();
 
-    // Create a post object with all fields explicitly set
     const postObject = {
       title: postData.title,
       content: postData.content,
@@ -59,7 +57,6 @@ export async function POST(request) {
     post.image = postData.image;
     await post.save();
 
-    // Log the saved post document
     console.log("Post after save:", post.toObject());
 
     return NextResponse.json({
@@ -87,7 +84,6 @@ export async function POST(request) {
   }
 }
 
-// Get posts for a community
 export async function GET(request) {
   try {
     const url = new URL(request.url);
@@ -101,13 +97,11 @@ export async function GET(request) {
     }
     const community = await Community.findById(communityId).lean();
 
-    // Make sure to select the image field
     const posts = await CommunityPost.find({ community: communityId })
       .populate("author", "name email profilePicture")
       .sort({ createdAt: -1 })
       .lean();
 
-    // This should now include the image field for each post
     return NextResponse.json({
       success: true,
       posts,

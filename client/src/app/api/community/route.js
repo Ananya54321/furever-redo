@@ -8,7 +8,6 @@ import { getUserByToken } from "@/../actions/userActions";
 
 connectToDatabase();
 
-// GET all communities
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,7 +32,6 @@ export async function GET(request) {
   }
 }
 
-// Create a new community
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -124,7 +122,6 @@ export async function POST(request) {
   }
 }
 
-// Helper function to get posts for a community
 async function getPosts(communityId) {
   try {
     if (!communityId) {

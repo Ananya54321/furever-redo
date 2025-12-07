@@ -33,11 +33,9 @@ export async function POST(request) {
       );
     }
 
-    // Handle the checkout.session.completed event
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       
-      // Get userId from metadata
       const userId = session.metadata?.userId;
       
       if (!userId) {
@@ -45,7 +43,6 @@ export async function POST(request) {
         return NextResponse.json({ received: true });
       }
 
-      // Check if order already exists for this session
       const existingOrder = await Order.findOne({ 
         paymentSessionId: session.id 
       });
@@ -55,7 +52,6 @@ export async function POST(request) {
         return NextResponse.json({ received: true });
       }
 
-      // Create the order (similar to POST /api/orders but triggered by webhook)
       const user = await User.findById(userId).populate("cart.product");
       
       if (!user || user.cart.length === 0) {
@@ -80,13 +76,11 @@ export async function POST(request) {
           
           totalAmount += product.price * item.quantity;
           
-          // Update stock
           product.quantity = Math.max(0, product.quantity - item.quantity);
           await product.save();
         }
       }
 
-      // Create order
       const order = await Order.create({
         userId,
         items: orderItems,
@@ -99,7 +93,6 @@ export async function POST(request) {
         paymentSessionId: session.id,
       });
 
-      // Clear cart and update user
       user.cart = [];
       user.productsBought.push(order._id);
       await user.save();

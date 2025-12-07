@@ -199,7 +199,6 @@ function CommunityInteriorPage() {
 
   return (
     <div className="flex flex-col min-h-screen pb-16 md:pb-0">
-      {/* Community Header */}
       <div className="px-4 py-3 border-b sticky top-0 bg-white z-10 md:hidden">
         <div className="flex items-center">
           <button onClick={() => router.back()} className="mr-3 text-primary">
@@ -211,7 +210,6 @@ function CommunityInteriorPage() {
         </div>
       </div>
 
-      {/* Community Info (Desktop) */}
       <div className="hidden md:block py-6 px-4 border-b">
         <h1 className="text-2xl font-bold text-primary">{communityName}</h1>
         {communityDescription && (
@@ -222,7 +220,6 @@ function CommunityInteriorPage() {
         </p>
       </div>
 
-      {/* Create Post Form */}
       <div className="px-4 py-3">
         {isLoggedIn ? (
           <div className="border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -239,7 +236,6 @@ function CommunityInteriorPage() {
         )}
       </div>
 
-      {/* Posts Feed */}
       <div className="px-4 divide-y">
         {Array.isArray(posts) && posts.length > 0 ? (
           posts.map((post) => (

@@ -66,7 +66,6 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    // Get user from cookie instead of body token
     const { cookies } = await import("next/headers");
     const cookieStore = await cookies();
     const userToken = cookieStore.get("userToken")?.value;

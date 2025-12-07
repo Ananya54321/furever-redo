@@ -1,9 +1,8 @@
 "use client";
-import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { ArrowRight, ShoppingBag, Users, Calendar, Heart, MessageCircle } from "lucide-react";
+import { ArrowRight, ShoppingBag, Users, Calendar, MessageCircle } from "lucide-react";
 
 export default function Homepage() {
   const fadeInUp = {

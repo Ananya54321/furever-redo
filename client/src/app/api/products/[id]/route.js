@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "../../../../../db/dbConfig";
 import Product from "../../../../../db/schema/product.schema";
-import Seller from "../../../../../db/schema/seller.schema";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
-// Ensure database is connected
 connectToDatabase();
 
 export async function GET(request, { params }) {

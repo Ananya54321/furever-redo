@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Dynamically import CometChat component with SSR disabled
 const CometChatNoSSR = dynamic(
   () => import("@/components/CometChat/CometChatNoSSR/CometChatNoSSR"),
   { ssr: false }
@@ -24,11 +23,9 @@ const Page = () => {
       if (typeof window === "undefined") return;
 
       try {
-        // Get user token from cookies
         let userToken = await getToken("userToken");
         let userType = "user";
 
-        // If no user token, check for seller token
         if (!userToken) {
           userToken = await getToken("sellerToken");
           userType = "seller";
@@ -45,13 +42,11 @@ const Page = () => {
           return;
         }
 
-        // Get user data using token
         const res = await getUserByToken(userToken, userType);
         console.log("User data:", res.user);
 
         if (!res.success) {
-           // If request returned success: false, it's a genuine error.
-           // We can throw here to be caught below, or handle directly.
+           throw new Error(res.message || "Failed to authenticate user");
            throw new Error(res.message || "Failed to authenticate user");
         }
 
@@ -68,26 +63,20 @@ const Page = () => {
       }
     };
 
-    // Check authentication on component mount
     authenticateUser();
 
-    // Cleanup function
     return () => {
       isMounted = false;
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
-
-  // Render loading state
+  }, []); 
   if (loading) {
     return <div className="chat-loading">Authenticating user...</div>;
   }
 
-  // Render error state
   if (error) {
     return <div className="chat-error">Error: {error}</div>;
   }
 
-  // Render chat component when user is authenticated
   return (
     <div style={{ height: "calc(100vh - 80px)", width: "100%" }} className="flex flex-col">
       {user ? (

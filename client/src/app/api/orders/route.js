@@ -42,13 +42,11 @@ export async function POST(request) {
     const body = await request.json();
     const { shippingAddress, paymentSessionId } = body;
     
-    // If verify with Stripe
     if (paymentSessionId) {
         const checkoutSession = await stripe.checkout.sessions.retrieve(paymentSessionId);
         if (checkoutSession.payment_status !== 'paid') {
              throw new Error("Payment not completed");
         }
-        // Could verify metadata.userId matches userId here
     }
 
     const user = await User.findById(userId).populate("cart.product").session(session);
@@ -65,9 +63,8 @@ export async function POST(request) {
     let totalAmount = 0;
     const orderItems = [];
 
-    // Verify stock and calculate total
     for (const item of user.cart) {
-        if (!item.product) continue; // Skip deleted products
+        if (!item.product) continue;
         
         const product = await Product.findById(item.product._id).session(session);
         
@@ -75,8 +72,6 @@ export async function POST(request) {
             throw new Error(`Product ${item.product.name} not found`);
         }
 
-        // Check stock only if we haven't already reserved it (Stripe flows usually involve reserving or optimistic check)
-        // For now, we check at checkout time.
         if (product.quantity < item.quantity) {
             throw new Error(`Insufficient stock for ${product.name}`);
         }
@@ -89,22 +84,18 @@ export async function POST(request) {
 
         totalAmount += product.price * item.quantity;
         
-        // Update product stock
         product.quantity -= item.quantity;
         await product.save({ session });
     }
 
-    // Create Order
     const order = await Order.create([{
         userId,
         items: orderItems,
         totalAmount,
-        shippingAddress: shippingAddress || { fullName: user.name, email: user.email }, // Use provided or fallback
-        paymentStatus: paymentSessionId ? "completed" : "pending", // Mark completed if verified
-        paymentSessionId: paymentSessionId || undefined, // Store session ID for tracking
+        shippingAddress: shippingAddress || { fullName: user.name, email: user.email },
+        paymentSessionId: paymentSessionId || undefined,
     }], { session });
 
-    // Clear user cart and add to productsBought
     user.cart = [];
     user.productsBought.push(order[0]._id);
     await user.save({ session });

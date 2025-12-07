@@ -7,7 +7,6 @@ import { getUserByToken } from "@/../actions/userActions";
 
 connectToDatabase();
 
-// Create a new comment
 export async function POST(request) {
   try {
     const { postId, commentText, token } = await request.json();
@@ -74,7 +73,6 @@ export async function POST(request) {
   }
 }
 
-// Get comments for a post
 export async function GET(request) {
   try {
     const url = new URL(request.url);

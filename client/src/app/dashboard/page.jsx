@@ -64,20 +64,22 @@ export default function DashboardPage() {
             </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <LayoutDashboard className="h-6 w-6 text-yellow-700" />
-                    Seller Tools
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-gray-600 mb-4">Manage your products (Sellers only).</p>
-                <Link href="/dashboard/seller/products">
-                    <Button className="w-full" variant="secondary">Manage Products</Button>
-                </Link>
-            </CardContent>
-        </Card>
+        {user?.userType === "seller" && (
+          <Card className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                      <LayoutDashboard className="h-6 w-6 text-yellow-700" />
+                      Seller Tools
+                  </CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <p className="text-gray-600 mb-4">Manage your products (Sellers only).</p>
+                  <Link href="/dashboard/seller/products">
+                      <Button className="w-full" variant="secondary">Manage Products</Button>
+                  </Link>
+              </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

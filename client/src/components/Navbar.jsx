@@ -12,6 +12,7 @@ import {
   PawPrint,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getToken, getUserByToken } from "../../actions/userActions";
 import CartSidebar from "./CartSidebar";
 
@@ -20,6 +21,7 @@ const Navbar = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,6 +49,13 @@ const Navbar = () => {
 
     fetchUser();
   }, []);
+
+  const handleNavClick = (e, href) => {
+    if (!user) {
+      e.preventDefault();
+      router.push('/login');
+    }
+  };
 
   const getInitials = (name) => {
     if (!name) return "U";
@@ -84,6 +93,7 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   href={link.href}
+                  onClick={(e) => handleNavClick(e, link.href)}
                   className="flex items-center gap-2 hover:text-accent transition-colors text-sm font-medium uppercase tracking-wider">
                   <link.icon size={18} />
                   {link.name}
@@ -98,21 +108,30 @@ const Navbar = () => {
                 Cart
               </button>
 
-              <Link href="/profile" className="ml-4 group">
-                {user?.profilePicture ? (
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-accent group-hover:border-white transition-colors">
-                    <img
-                      src={user.profilePicture}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-accent text-primary font-bold flex items-center justify-center border-2 border-transparent group-hover:border-white transition-colors">
-                    {user ? getInitials(user.name) : "U"}
-                  </div>
-                )}
-              </Link>
+              {user ? (
+                <Link href="/profile" className="ml-4 group">
+                  {user?.profilePicture ? (
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-accent group-hover:border-white transition-colors">
+                      <img
+                        src={user.profilePicture}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-accent text-primary font-bold flex items-center justify-center border-2 border-transparent group-hover:border-white transition-colors">
+                      {getInitials(user.name)}
+                    </div>
+                  )}
+                </Link>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="ml-4 px-4 py-2 bg-accent text-primary rounded-md hover:bg-white transition-colors text-sm font-medium uppercase tracking-wider"
+                >
+                  Login
+                </Link>
+              )}
             </nav>
 
             {/* Mobile menu button */}
@@ -130,8 +149,11 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="flex items-center gap-3 px-2 py-2 hover:bg-white/10 rounded-md transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}>
+                  onClick={(e) => {
+                    handleNavClick(e, link.href);
+                    if (user) setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-2 py-2 hover:bg-white/10 rounded-md transition-colors">
                   <link.icon size={20} className="text-accent" />
                   {link.name}
                 </Link>
@@ -145,25 +167,34 @@ const Navbar = () => {
                   <ShoppingCart size={20} className="text-accent" />
                   Cart
               </button>
-              <Link
-                href="/profile"
-                className="flex items-center gap-3 px-2 py-2 hover:bg-white/10 rounded-md transition-colors"
-                onClick={() => setMobileMenuOpen(false)}>
-                {user?.profilePicture ? (
-                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                    <img
-                      src={user.profilePicture}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-accent text-primary text-xs flex items-center justify-center">
-                    {user ? getInitials(user.name) : "U"}
-                  </div>
-                )}
-                Profile
-              </Link>
+              {user ? (
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 px-2 py-2 hover:bg-white/10 rounded-md transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}>
+                  {user?.profilePicture ? (
+                    <div className="w-6 h-6 rounded-full overflow-hidden">
+                      <img
+                        src={user.profilePicture}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-accent text-primary text-xs flex items-center justify-center">
+                      {getInitials(user.name)}
+                    </div>
+                  )}
+                  Profile
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-3 px-2 py-2 bg-accent text-primary hover:bg-white rounded-md transition-colors font-medium"
+                  onClick={() => setMobileMenuOpen(false)}>
+                  Login
+                </Link>
+              )}
             </nav>
           )}
         </div>

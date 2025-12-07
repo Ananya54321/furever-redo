@@ -6,7 +6,6 @@ import Seller from "./schema/seller.schema";
 import Product from "./schema/product.schema";
 import Review from "./schema/review.schema";
 import Order from "./schema/order.schema";
-import { addToCart } from "@/app/store/functions";
 
 export const db = {
   addUser: async (data) => {
